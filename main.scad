@@ -1,24 +1,45 @@
 
 outerX = 490; // Front edge of box.  
-outerZ=475;
-outerY=outerZ ; 
+outerZ=490;
+outerY=460 ; 
 
 
-innerX=454;
+// plunge depth from outside of bar to bottom (how much glass needs to fill)
+true_plunge = 6.1;
+plunge = 4.5; // 3mm slack? 
+
+
+innerX= outerX-(20*2)+(plunge*2); // was 454;
 innerZ=innerX;
 
 m3=3.1/2;
 m5=5.125/2;
 
+
+
 // Top
+// top has no butted corners. 
+TopX=450+ (2* plunge);
+TopY=419+ 2*plunge;
 
+// front inner (which we won't use). 
 
+// has 4 butted corners
+FrontZ=449+2*plunge;
+FrontX=FrontZ;
+
+// Left - no butted corners
+SideZ=449+2*plunge;
+SideY=419+2*plunge;
+
+// Back  - 4 butted corners, same as front. 
 
 
 module bigpane(){
 
 	difference() {
-		square ([outerX,outerZ]);
+		translate([outerX/2,outerZ/2])
+			square([outerX-4,outerZ-4],center=true);
 
 		// vertical holes
 		L=50; 
@@ -26,35 +47,22 @@ module bigpane(){
 		for (x=[10,outerX-10]) {
 			// corners
 
-			for (z=[L,Rv]) {
+			for (z=[L,outerZ/2,Rv]) {
 				translate([x,z])
 					circle(r=m3);
 			}
-			// edges
-			for (z=[1:3]) {
-					translate([x, L+ z* (Rv-L)/4])
-						circle(r=m3);
-				}
+
 		}
 
 
 	// Horizontal Holes
-		Rh=outerX-50;
-		for (y=[10,outerZ-10]) {
-			// corners
 
-			for (x=[L,Rh]) {
-				translate([x,y])
+		for (x=[50,outerX/2,outerX-50]) {
+			for (z=[10,outerZ-10]) {
+				translate([x,z])
 					circle(r=m3);
 			}
-			// edges
-			for (x=[1:3]) {
-					translate([L+ x * (Rh-L)/4,y])
-						circle(r=m3);
-				}
 		}
-
-
 	}
 }
 
@@ -62,30 +70,71 @@ module bigpane(){
 
 module sidepane(){
 
-	union() {
-		square ([innerX,innerZ]);
+		difference() {
+	
+			translate([outerY/2,outerZ/2])
+				square ([outerY-4,outerZ-4],center=true); // shrink so that we can be sloppy with front & back panel overlap. 
 
-		// vertical bumps
-		for (x=[0,innerX]) {
-			// edges
-			for (z=[1:5]) {
-					translate([x, z* innerZ/6])
-						circle(r=1,$fn=20);
+			//  vertical mounting slots
+			for (x=[10,outerY-10]) {
+					for (z=[50,outerZ/2,outerZ-50]) {
+						translate([x, z]) {
+								circle(r=m3,$fn=20);
+						}
+						
+					}
+			}
+
+
+
+			// horizontal mounting holes
+				for (z=[10,outerZ-10]) {
+					// edges
+					for (y=[50,outerY/2,outerY-50]) {
+							translate([y, z]) {
+
+
+							hull(){
+								translate([0,-m3]) 
+									circle(r=m3,$fn=20);
+								translate([0,m3]) 
+									circle(r=m3);												
+							}
+
+								circle(r=m3);
+							}
+					}
 				}
-		}
 
 
-	// Horizontal Holes\
-		for (y=[0,innerZ]) {
+
+
+
+		if (0) {
+		//  bumps seemed like good idea, but not much help in practice. 
+			// vertical bumps
+			for (x=[0,innerX]) {
 				// edges
-			for (x=[1:3]) {
-					translate([ x * innerZ/4,y])
-						circle(r=1,$fn=20);
-				}
+				for (z=[1:5]) {
+						translate([x, z* innerZ/6])
+							circle(r=1,$fn=20);
+					}
+			}
+
+
+		// Horizontal Holes\
+			for (y=[0,innerZ]) {
+					// edges
+				for (x=[1:3]) {
+						translate([ x * innerZ/4,y])
+							circle(r=1,$fn=20);
+					}
+			}
 		}
 
-
+		
 	}
+
 }
 
 
@@ -107,7 +156,8 @@ module 3induct (){
 
 }
 
-module top() {
+module top() { 
+
 	difference (){
 		bigpane();
 		translate([outerX/2,outerZ/2+15])
@@ -177,7 +227,7 @@ module hingeholes(){
 module hingespacer(){
 	difference(){
 		hull(){
-			for(x=[2,19]){
+			for(x=[2,16]){
 				for(y=[-20,20])
 					translate([x,y])
 						circle(r=2);
@@ -242,7 +292,7 @@ module front() {
 	difference (){
 		bigpane();
 
-			3induct();
+		3induct();
 		
 		translate([outerX/2,40])
 			hull() {
@@ -316,14 +366,17 @@ module slotplate (){
 
 
 module left() {
-	H=50;
-	xoffset=110;
+	H=50; // where to put our access plate. Z axis
+	yoffset=120;  // access plate Y access 
+
+
+
 	difference (){
 		sidepane();
 		// DIN for power
 		
 
-		translate([xoffset,H]) {
+		translate([yoffset,H]) {
 			
 			translate([-40,0])
 				circle(r=20.25/2);
@@ -345,6 +398,22 @@ module left() {
 
 				coverplateholes();
 		}
+
+
+		translate([outerY-50,70+50])
+			rotate(90) {
+
+				coverplateholes();
+				// usb (power)
+					translate([-5,0])
+						circle(r=12/2);
+		
+				translate([20,0])
+					circle(r=12/2);
+				
+		
+			}
+
 	}
 }
 
@@ -387,8 +456,15 @@ module coverplate(){
 //back();
 //left(); // 2x, one is right
 //coverplate();
-//front();
-//frontdoor();
+front(); // get plastic blank at 50cm /20 inch square, then cut shape out. 
+//top(); // 460x490, get cut to fix & then freehand the holes using a template. 
+
+//translate([0,0,-1])
+//	color("green")
+//		frontdoor();
+
+//translate([outerX-20,77.5,-1])
+//hingespacer();
 //slotplate();
 
-hingespacer(); // 2x
+//hingespacer(); // 2x
